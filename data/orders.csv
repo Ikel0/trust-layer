@@ -1,0 +1,6 @@
+order_id,customer_email,amount,order_date
+ORD-1001,alice@example.com,49.90,2026-06-18
+ORD-1002,bob@example.com,120.00,2026-06-18
+,chloe@example.com,31.50,2026-06-18
+ORD-1004,invalid-email,-5.00,2026-06-18
+ORD-1005,dan@example.com,64.00,not-a-date
