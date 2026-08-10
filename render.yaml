@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: trust-layer-ikel
+    runtime: docker
+    plan: free
+    healthCheckPath: /
