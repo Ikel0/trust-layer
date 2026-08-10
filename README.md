@@ -14,3 +14,9 @@ python3 src/run_quality.py
 ```
 
 Suite : connecteur Snowflake/dbt, historique de qualité et alerting.
+
+## Vérifier
+
+```bash
+python3 -m unittest discover -s tests
+```
