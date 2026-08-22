@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Trust Layer's local web application."""
 import argparse
+from collections import Counter
 import csv
+import hashlib
 import io
 import json
 import os
@@ -14,6 +16,13 @@ from run_quality import analyze
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_COLUMNS = {"order_id", "customer_email", "amount", "order_date"}
 WORLD_BANK_URL = "https://api.worldbank.org/v2/country/FRA/indicator/SP.POP.TOTL?format=json&per_page=8"
+ORDERS_CONTRACT = {
+    "id": "orders.v1",
+    "version": "1.0.0",
+    "owner": "analytics",
+    "fields": ["order_id", "customer_email", "amount", "order_date"],
+    "controls": ["order_id_not_empty", "order_id_unique", "email_valid", "amount_positive", "order_date_iso"],
+}
 
 
 def read_dataset(content: str) -> list[dict[str, str]]:
@@ -63,6 +72,14 @@ def profile_world_bank_population() -> dict:
         }
 
 
+def analyze_upload(content: str) -> dict:
+    report = analyze(read_dataset(content), "uploaded.csv")
+    report["contract"] = ORDERS_CONTRACT
+    report["source_fingerprint"] = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
+    report["issue_summary"] = dict(Counter(issue["rule"] for issue in report["issues"]))
+    return report
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs): super().__init__(*args,directory=str(ROOT),**kwargs)
     def send_json(self, payload, status=HTTPStatus.OK):
@@ -73,12 +90,14 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"status": "ok", "service": "trust-layer", "checks": ["order_id", "customer_email", "amount", "order_date"]})
         if self.path == "/api/open-data/world-bank":
             return self.send_json(profile_world_bank_population())
+        if self.path == "/api/contracts/orders":
+            return self.send_json(ORDERS_CONTRACT)
         return super().do_GET()
     def do_POST(self):
         if self.path != "/api/check": return self.send_json({"error": "unknown endpoint"}, HTTPStatus.NOT_FOUND)
         try:
             content = self.rfile.read(int(self.headers.get("Content-Length",0))).decode("utf-8-sig")
-            return self.send_json(analyze(read_dataset(content), "uploaded.csv"))
+            return self.send_json(analyze_upload(content))
         except (UnicodeDecodeError, ValueError) as error:
             return self.send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
 def main():
