@@ -1,1 +1,51 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trust Layer — data quality</title><link rel="stylesheet" href="app.css"></head><body><header><a href="/" class="brand">TRUST<span>/</span>LAYER</a><div><a href="https://github.com/Ikel0/trust-layer" target="_blank">Code source ↗</a><a href="https://ikel0.github.io/">Portfolio d’Ikel ↗</a></div></header><main><section class="intro"><p class="eyebrow">DATA QUALITY CHECKPOINT</p><h1>Avant de décider,<br>vérifions la <i>source.</i></h1><p>Trust Layer analyse un fichier de données et rend immédiatement visibles les erreurs qui risquent de contaminer vos indicateurs ou vos décisions.</p></section><section class="checker"><div class="check-head"><div><p>ANALYSE CSV</p><h2>Déposer ou coller un dataset</h2></div><button id="sample">Charger l’exemple</button></div><textarea id="csv" spellcheck="false" placeholder="order_id,customer_email,amount,order_date&#10;ORD-001,alice@example.com,49.90,2026-06-18"></textarea><button id="run">Lancer les contrôles <b>→</b></button></section><section id="report" aria-live="polite"><div class="waiting"><b>●</b><p>Contrôles inclus : identifiant obligatoire et unique, email valide, montant positif et date ISO.</p></div></section></main><footer><span>Python · API locale · CI-friendly</span><a href="README.md">Guide de lancement ↗</a></footer><script>const csv=document.querySelector('#csv'),report=document.querySelector('#report');document.querySelector('#sample').onclick=()=>fetch('data/orders.csv').then(r=>r.text()).then(x=>csv.value=x);document.querySelector('#run').onclick=async()=>{if(!csv.value.trim())return;report.innerHTML='<p class="loading">Exécution des contrôles…</p>';try{const data=await fetch('/api/check',{method:'POST',headers:{'Content-Type':'text/csv'},body:csv.value}).then(r=>r.json());const issues=data.issues;report.innerHTML=`<div class="summary ${data.status}"><span>${data.status==='passed'?'DATASET VALIDE':'ATTENTION REQUISE'}</span><b>${issues.length}</b><small>anomalie${issues.length>1?'s':''} sur ${data.rows} lignes</small></div>`+(issues.length?'<div class="issues">'+issues.map(i=>`<article><span>ligne ${i.line}</span><b>${i.rule}</b><p>${i.detail}</p></article>`).join('')+'</div>':'<p class="success">Toutes les règles ont été validées.</p>')}catch{report.innerHTML='<p class="loading">Lance l’application avec <code>python3 src/server.py</code> pour analyser un fichier.</p>'}};</script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trust Layer · data quality</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header><a href="/" class="brand">TRUST<span>/</span>LAYER</a><div><a href="https://github.com/Ikel0/trust-layer" target="_blank" rel="noopener">Code source ↗</a><a href="https://ikel0.github.io/">Portfolio d’Ikel ↗</a></div></header>
+  <main>
+    <section class="intro"><p class="eyebrow">DATA QUALITY CHECKPOINT</p><h1>Avant de décider,<br>vérifions la <i>source.</i></h1><p>Trust Layer analyse un fichier de données et rend visibles les erreurs qui risquent de contaminer un indicateur ou une décision.</p></section>
+    <section class="checker" aria-labelledby="checker-title">
+      <div class="check-head"><div><p>ANALYSE CSV</p><h2 id="checker-title">Tester un jeu de données</h2></div><button id="sample" type="button">Charger un scénario</button></div>
+      <p class="helper">Colonnes attendues : <code>order_id</code>, <code>customer_email</code>, <code>amount</code>, <code>order_date</code>.</p>
+      <label class="sr-only" for="csv">Contenu CSV à analyser</label>
+      <textarea id="csv" spellcheck="false" placeholder="order_id,customer_email,amount,order_date&#10;ORD-001,alice@example.com,49.90,2026-06-18"></textarea>
+      <button id="run" type="button">Lancer les contrôles <b>→</b></button>
+    </section>
+    <section id="report" aria-live="polite"><div class="waiting"><b>●</b><p>Règles incluses : identifiant obligatoire et unique, email valide, montant positif et date ISO.</p></div></section>
+  </main>
+  <footer><span>Python · API locale · CI-friendly</span><a href="README.md">Guide de lancement ↗</a></footer>
+  <script>
+    const csv = document.querySelector('#csv');
+    const report = document.querySelector('#report');
+    const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+
+    document.querySelector('#sample').addEventListener('click', async () => {
+      const response = await fetch('data/orders.csv');
+      csv.value = await response.text();
+      csv.focus();
+    });
+
+    document.querySelector('#run').addEventListener('click', async () => {
+      if (!csv.value.trim()) { report.innerHTML = '<p class="loading">Ajoute quelques lignes CSV ou charge le scénario de démonstration.</p>'; return; }
+      report.innerHTML = '<p class="loading">Exécution des contrôles…</p>';
+      try {
+        const response = await fetch('/api/check', { method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: csv.value });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Le fichier ne peut pas être analysé.');
+        const issues = data.issues;
+        const summary = `<div class="summary ${data.status}"><span>${data.status === 'passed' ? 'DATASET VALIDE' : 'ATTENTION REQUISE'}</span><b>${issues.length}</b><small>anomalie${issues.length > 1 ? 's' : ''} sur ${data.rows} lignes</small></div>`;
+        const details = issues.length ? `<div class="issues">${issues.map(issue => `<article><span>ligne ${issue.line}</span><b>${escapeHtml(issue.rule)}</b><p>${escapeHtml(issue.detail)}</p></article>`).join('')}</div>` : '<p class="success">Toutes les règles ont été validées. Le fichier peut passer à l’étape suivante.</p>';
+        report.innerHTML = summary + details;
+      } catch (error) {
+        report.innerHTML = `<p class="loading">${escapeHtml(error.message)}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
