@@ -18,6 +18,17 @@
       <button id="run" type="button">Lancer les contrôles <b>→</b></button>
     </section>
     <section id="report" aria-live="polite"><div class="waiting"><b>●</b><p>Règles incluses : identifiant obligatoire et unique, email valide, montant positif et date ISO.</p></div></section>
+    <section class="open-data" aria-labelledby="open-data-title">
+      <div>
+        <p class="eyebrow">PARCOURS OPEN DATA</p>
+        <h2 id="open-data-title">Profil d’une source publique</h2>
+        <p>Un exemple distinct du CSV métier : Trust Layer récupère une série officielle, mesure les valeurs manquantes et expose sa provenance.</p>
+      </div>
+      <div class="open-data-action">
+        <button id="world-bank" type="button">Analyser les données World Bank</button>
+        <div id="public-report" class="public-report" aria-live="polite">Aucune source chargée pour le moment.</div>
+      </div>
+    </section>
   </main>
   <footer><span>Python · API locale · CI-friendly</span><a href="README.md">Guide de lancement ↗</a></footer>
   <script>
@@ -44,6 +55,23 @@
         report.innerHTML = summary + details;
       } catch (error) {
         report.innerHTML = `<p class="loading">${escapeHtml(error.message)}</p>`;
+      }
+    });
+
+    document.querySelector('#world-bank').addEventListener('click', async event => {
+      const output = document.querySelector('#public-report');
+      event.currentTarget.disabled = true;
+      output.textContent = 'Lecture et profilage de la source officielle…';
+      try {
+        const response = await fetch('/api/open-data/world-bank');
+        const data = await response.json();
+        if (!data.live) throw new Error(data.message || 'Source indisponible.');
+        const latest = data.records[0];
+        output.innerHTML = `<p><b>${escapeHtml(data.dataset)}</b></p><dl><div><dt>Lignes lues</dt><dd>${data.profile.rows}</dd></div><div><dt>Valeurs absentes</dt><dd>${data.profile.missing_values}</dd></div><div><dt>Dernière valeur</dt><dd>${Number(latest.value).toLocaleString('fr-FR')} <small>(${escapeHtml(latest.year)})</small></dd></div></dl><a href="${escapeHtml(data.source_url)}" target="_blank" rel="noopener">Voir la source World Bank ↗</a>`;
+      } catch (error) {
+        output.textContent = error.message;
+      } finally {
+        event.currentTarget.disabled = false;
       }
     });
   </script>
