@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from server import profile_world_bank_population
+from server import analyze_upload, profile_world_bank_population
 
 class TrustLayerTest(unittest.TestCase):
     def test_sample_dataset_fails_with_expected_issues(self):
@@ -32,5 +32,13 @@ class TrustLayerTest(unittest.TestCase):
         self.assertEqual(report["profile"]["rows"], 2)
         self.assertEqual(report["profile"]["missing_values"], 1)
         self.assertEqual(report["records"][0]["year"], "2025")
+
+    def test_uploaded_report_carries_contract_and_fingerprint(self):
+        report = analyze_upload("order_id,customer_email,amount,order_date\nORD-1,alice@example.com,20,2026-08-22\n")
+
+        self.assertEqual(report["contract"]["id"], "orders.v1")
+        self.assertEqual(report["contract"]["version"], "1.0.0")
+        self.assertEqual(len(report["source_fingerprint"]), 16)
+        self.assertEqual(report["issue_summary"], {})
 
 if __name__ == "__main__": unittest.main()

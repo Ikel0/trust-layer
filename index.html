@@ -50,7 +50,7 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Le fichier ne peut pas être analysé.');
         const issues = data.issues;
-        const summary = `<div class="summary ${data.status}"><span>${data.status === 'passed' ? 'DATASET VALIDE' : 'ATTENTION REQUISE'}</span><b>${issues.length}</b><small>anomalie${issues.length > 1 ? 's' : ''} sur ${data.rows} lignes</small></div>`;
+        const summary = `<div class="summary ${data.status}"><span>${data.status === 'passed' ? 'DATASET VALIDE' : 'ATTENTION REQUISE'}</span><b>${issues.length}</b><small>anomalie${issues.length > 1 ? 's' : ''} sur ${data.rows} lignes · contrat ${escapeHtml(data.contract.id)}@${escapeHtml(data.contract.version)} · empreinte ${escapeHtml(data.source_fingerprint)}</small></div>`;
         const details = issues.length ? `<div class="issues">${issues.map(issue => `<article><span>ligne ${issue.line}</span><b>${escapeHtml(issue.rule)}</b><p>${escapeHtml(issue.detail)}</p></article>`).join('')}</div>` : '<p class="success">Toutes les règles ont été validées. Le fichier peut passer à l’étape suivante.</p>';
         report.innerHTML = summary + details;
       } catch (error) {
