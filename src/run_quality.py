@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Trust Layer — dependency-free checks for an order CSV."""
+"""Trust Layer, dependency-free checks for an order CSV."""
 from __future__ import annotations
 
 import argparse
