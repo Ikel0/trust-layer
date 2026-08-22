@@ -8,10 +8,12 @@ import os
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.request import urlopen
 from run_quality import analyze
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_COLUMNS = {"order_id", "customer_email", "amount", "order_date"}
+WORLD_BANK_URL = "https://api.worldbank.org/v2/country/FRA/indicator/SP.POP.TOTL?format=json&per_page=8"
 
 
 def read_dataset(content: str) -> list[dict[str, str]]:
@@ -26,6 +28,41 @@ def read_dataset(content: str) -> list[dict[str, str]]:
     return rows
 
 
+def profile_world_bank_population() -> dict:
+    """Fetch a documented public series and profile it like a data source."""
+    try:
+        with urlopen(WORLD_BANK_URL, timeout=6) as response:
+            payload = json.load(response)
+        records = [
+            {"year": row["date"], "value": row["value"]}
+            for row in payload[1]
+            if row.get("value") is not None
+        ]
+        values = [record["value"] for record in records]
+        return {
+            "status": "ok",
+            "live": True,
+            "source": "World Bank · World Development Indicators",
+            "source_url": WORLD_BANK_URL,
+            "dataset": "Population totale, France (SP.POP.TOTL)",
+            "records": records,
+            "profile": {
+                "rows": len(payload[1]),
+                "missing_values": len(payload[1]) - len(records),
+                "min": min(values) if values else None,
+                "max": max(values) if values else None,
+            },
+        }
+    except (OSError, ValueError, KeyError, IndexError, TypeError):
+        return {
+            "status": "unavailable",
+            "live": False,
+            "source": "World Bank · World Development Indicators",
+            "source_url": WORLD_BANK_URL,
+            "message": "La source publique est momentanément indisponible. Réessaie dans quelques instants.",
+        }
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs): super().__init__(*args,directory=str(ROOT),**kwargs)
     def send_json(self, payload, status=HTTPStatus.OK):
@@ -34,6 +71,8 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             return self.send_json({"status": "ok", "service": "trust-layer", "checks": ["order_id", "customer_email", "amount", "order_date"]})
+        if self.path == "/api/open-data/world-bank":
+            return self.send_json(profile_world_bank_population())
         return super().do_GET()
     def do_POST(self):
         if self.path != "/api/check": return self.send_json({"error": "unknown endpoint"}, HTTPStatus.NOT_FOUND)
