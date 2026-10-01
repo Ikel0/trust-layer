@@ -2,6 +2,12 @@
 
 Trust Layer est un contrôle qualité de données utilisable localement : l’application analyse un CSV et rend visibles les erreurs avant qu’elles n’alimentent un reporting ou une décision.
 
+## Test en moins d’une minute
+
+Lance l’application, ouvre `http://localhost:8000`, puis clique sur **Tester le CSV fourni**. Le chargement et les contrôles se font dans le même geste. Le jeu contient volontairement plusieurs anomalies pour rendre le rapport immédiatement lisible.
+
+Le parcours World Bank est séparé et optionnel. Il sert à vérifier récupération, profilage, valeurs absentes et provenance d’une vraie source publique. Si la source ne répond pas, le contrôle CSV local reste entièrement utilisable.
+
 ## Ce qui fonctionne
 
 - vérification du schéma exact, des identifiants, emails, montants strictement positifs et dates ;

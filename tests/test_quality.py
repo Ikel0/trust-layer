@@ -32,6 +32,8 @@ class TrustLayerTest(unittest.TestCase):
         self.assertEqual(report["profile"]["rows"], 2)
         self.assertEqual(report["profile"]["missing_values"], 1)
         self.assertEqual(report["records"][0]["year"], "2025")
+        self.assertEqual(report["indicator"], "SP.POP.TOTL")
+        self.assertIn("datahelpdesk.worldbank.org", report["source_documentation"])
 
     def test_uploaded_report_carries_contract_and_fingerprint(self):
         report = analyze_upload("order_id,customer_email,amount,order_date\nORD-1,alice@example.com,20,2026-08-22\n")

@@ -16,6 +16,7 @@ from run_quality import analyze
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_COLUMNS = {"order_id", "customer_email", "amount", "order_date"}
 WORLD_BANK_URL = "https://api.worldbank.org/v2/country/FRA/indicator/SP.POP.TOTL?format=json&per_page=8"
+WORLD_BANK_DOCS = "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392"
 ORDERS_CONTRACT = {
     "id": "orders.v1",
     "version": "1.0.0",
@@ -59,6 +60,8 @@ def profile_world_bank_population() -> dict:
             "live": True,
             "source": "World Bank · World Development Indicators",
             "source_url": WORLD_BANK_URL,
+            "source_documentation": WORLD_BANK_DOCS,
+            "indicator": "SP.POP.TOTL",
             "dataset": "Population totale, France (SP.POP.TOTL)",
             "records": records,
             "profile": {
@@ -74,6 +77,8 @@ def profile_world_bank_population() -> dict:
             "live": False,
             "source": "World Bank · World Development Indicators",
             "source_url": WORLD_BANK_URL,
+            "source_documentation": WORLD_BANK_DOCS,
+            "indicator": "SP.POP.TOTL",
             "message": "La source publique est momentanément indisponible. Réessaie dans quelques instants.",
         }
 
