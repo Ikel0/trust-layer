@@ -29,8 +29,14 @@ def read_dataset(content: str) -> list[dict[str, str]]:
     reader = csv.DictReader(io.StringIO(content))
     columns = set(reader.fieldnames or [])
     missing = EXPECTED_COLUMNS - columns
-    if missing:
-        raise ValueError("Colonnes attendues : " + ", ".join(sorted(EXPECTED_COLUMNS)) + ". Colonnes manquantes : " + ", ".join(sorted(missing)))
+    unexpected = columns - EXPECTED_COLUMNS
+    if missing or unexpected:
+        details = []
+        if missing:
+            details.append("colonnes manquantes : " + ", ".join(sorted(missing)))
+        if unexpected:
+            details.append("colonnes non prévues : " + ", ".join(sorted(unexpected)))
+        raise ValueError("Contrat orders.v1 invalide, " + "; ".join(details) + ".")
     rows = list(reader)
     if not rows:
         raise ValueError("Le fichier ne contient aucune ligne de données.")

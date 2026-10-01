@@ -4,7 +4,7 @@ Trust Layer est un contrôle qualité de données utilisable localement : l’ap
 
 ## Ce qui fonctionne
 
-- vérification des identifiants, emails, montants et dates ;
+- vérification du schéma exact, des identifiants, emails, montants strictement positifs et dates ;
 - génération d’un rapport JSON et Markdown ;
 - code de sortie non nul si une règle bloquante échoue (intégrable à une CI).
 - profilage à la demande d’une série open data officielle World Bank, avec provenance et valeurs manquantes visibles.

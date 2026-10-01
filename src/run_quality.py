@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import re
 import sys
 from datetime import datetime
@@ -21,7 +22,9 @@ def analyze(rows: list[dict[str, str]], dataset: str = "dataset.csv") -> dict:
         seen.add(order_id)
         if not EMAIL.match(row.get("customer_email", "").strip()): issues.append({"rule":"email_valid", "line":line, "detail":"Email invalide"})
         try:
-            if float(row.get("amount", "")) < 0: issues.append({"rule":"amount_positive", "line":line, "detail":"Montant négatif"})
+            amount = float(row.get("amount", ""))
+            if not math.isfinite(amount) or amount <= 0:
+                issues.append({"rule":"amount_positive", "line":line, "detail":"Montant strictement positif attendu"})
         except ValueError: issues.append({"rule":"amount_numeric", "line":line, "detail":"Montant non numérique"})
         try: datetime.strptime(row.get("order_date", ""), "%Y-%m-%d")
         except ValueError: issues.append({"rule":"order_date_iso", "line":line, "detail":"Date attendue : YYYY-MM-DD"})
