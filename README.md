@@ -4,7 +4,7 @@ Trust Layer contrôle un CSV de commandes ligne par ligne et liste les erreurs a
 
 ![Page de démonstration de Trust Layer](docs/demo.png)
 
-La capture montre le rapport sur le CSV fourni (4 anomalies sur 5 lignes, contrat `orders.v1`) et, en bas, le profil d’une série publique de population.
+La capture montre le rapport sur le CSV fourni (4 anomalies sur 3 lignes, 5 lignes lues, contrat `orders.v1`) et, en bas, le profil d’une série publique de population.
 
 ## Test en moins d’une minute
 

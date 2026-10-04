@@ -20,14 +20,14 @@ def analyze(rows: list[dict[str, str]], dataset: str = "dataset.csv") -> dict:
         if not order_id: issues.append({"rule":"order_id_not_empty", "line":line, "detail":"Identifiant obligatoire"})
         elif order_id in seen: issues.append({"rule":"order_id_unique", "line":line, "detail":"Identifiant dupliqué"})
         seen.add(order_id)
-        if not EMAIL.match(row.get("customer_email", "").strip()): issues.append({"rule":"email_valid", "line":line, "detail":"Email invalide"})
+        if not EMAIL.match(row.get("customer_email", "").strip()): issues.append({"rule":"email_valid", "line":line, "detail":"Adresse e-mail invalide"})
         try:
             amount = float(row.get("amount", ""))
             if not math.isfinite(amount) or amount <= 0:
                 issues.append({"rule":"amount_positive", "line":line, "detail":"Montant strictement positif attendu"})
         except ValueError: issues.append({"rule":"amount_numeric", "line":line, "detail":"Montant non numérique"})
         try: datetime.strptime(row.get("order_date", ""), "%Y-%m-%d")
-        except ValueError: issues.append({"rule":"order_date_iso", "line":line, "detail":"Date attendue : YYYY-MM-DD"})
+        except ValueError: issues.append({"rule":"order_date_iso", "line":line, "detail":"Date attendue : AAAA-MM-JJ"})
     return {"dataset":dataset, "rows":len(rows), "status":"failed" if issues else "passed", "issues":issues}
 
 def main():

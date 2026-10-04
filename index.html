@@ -61,7 +61,13 @@
         if (!response.ok) throw new Error(data.error || 'Le fichier ne peut pas être analysé.');
         const issues = data.issues;
         const passed = data.status === 'passed';
-        const summary = `<div class="summary"><p class="verdict" data-status="${passed ? 'passed' : 'failed'}">${passed ? 'Fichier valide' : 'Attention requise'} : ${issues.length} anomalie${issues.length > 1 ? 's' : ''} sur ${data.rows} ligne${data.rows > 1 ? 's' : ''}</p><p class="meta">Contrat <span class="mono">${escapeHtml(data.contract.id)}</span> version <span class="mono">${escapeHtml(data.contract.version)}</span> · empreinte <span class="mono">${escapeHtml(data.source_fingerprint)}</span></p></div>`;
+        const plural = (count, word) => `${count} ${word}${count > 1 ? 's' : ''}`;
+        const affectedLines = new Set(issues.map(issue => issue.line)).size;
+        const rowsRead = `${plural(data.rows, 'ligne')} ${data.rows > 1 ? 'lues' : 'lue'}`;
+        const verdict = issues.length
+          ? `Attention requise : ${plural(issues.length, 'anomalie')} sur ${plural(affectedLines, 'ligne')} (${rowsRead})`
+          : `Fichier valide : aucune anomalie (${rowsRead})`;
+        const summary = `<div class="summary"><p class="verdict" data-status="${passed ? 'passed' : 'failed'}">${verdict}</p><p class="meta">Contrat <span class="mono">${escapeHtml(data.contract.id)}</span> version <span class="mono">${escapeHtml(data.contract.version)}</span> · empreinte <span class="mono">${escapeHtml(data.source_fingerprint)}</span></p></div>`;
         const details = issues.length
           ? `<table class="issues"><thead><tr><th scope="col">Ligne</th><th scope="col">Règle</th><th scope="col">Détail</th></tr></thead><tbody>${issues.map(issue => `<tr><td class="num">${issue.line}</td><td class="rule">${escapeHtml(issue.rule)}</td><td class="detail">${escapeHtml(issue.detail)}</td></tr>`).join('')}</tbody></table>`
           : '<p class="success">Toutes les règles passent. Le fichier peut passer à l’étape suivante.</p>';
