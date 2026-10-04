@@ -1,30 +1,31 @@
 # Trust Layer
 
-Trust Layer est un contrôle qualité de données utilisable localement : l’application analyse un CSV et rend visibles les erreurs avant qu’elles n’alimentent un reporting ou une décision.
+Trust Layer contrôle un CSV de commandes ligne par ligne et liste les erreurs avant qu’elles n’alimentent un reporting ou une décision. Démo : https://trust-layer-ikel-vt39.onrender.com
+
+![Page de démonstration de Trust Layer](docs/demo.png)
+
+La capture montre le rapport sur le CSV fourni (4 anomalies sur 5 lignes, contrat `orders.v1`) et, en bas, le profil d’une série publique de population.
 
 ## Test en moins d’une minute
 
-Lance l’application, ouvre `http://localhost:8000`, puis clique sur **Tester le CSV fourni**. Le chargement et les contrôles se font dans le même geste. Le jeu contient volontairement plusieurs anomalies pour rendre le rapport immédiatement lisible.
+Lance l’application, ouvre `http://localhost:8000`, puis clique sur **Tester le CSV fourni**. Le chargement et les contrôles se font dans le même geste. Le fichier `data/orders.csv` contient volontairement plusieurs anomalies. **Tester un CSV valide** montre le cas sans erreur.
 
-Le parcours World Bank est séparé et optionnel. Il sert à vérifier récupération, profilage, valeurs absentes et provenance d’une vraie source publique. Si la source ne répond pas, le contrôle CSV local reste entièrement utilisable.
+Le bouton **Analyser les données World Bank** appelle `GET /api/open-data/world-bank`, qui lit la population totale de la France (`SP.POP.TOTL`), compte les valeurs absentes et renvoie la provenance. Ce parcours est séparé du contrôle métier : si la source publique ne répond pas, le contrôle CSV reste utilisable.
 
 ## Ce qui fonctionne
 
 - vérification du schéma exact, des identifiants, emails, montants strictement positifs et dates ;
-- génération d’un rapport JSON et Markdown ;
-- code de sortie non nul si une règle bloquante échoue (intégrable à une CI).
-- profilage à la demande d’une série open data officielle World Bank, avec provenance et valeurs manquantes visibles.
-- contrat `orders.v1` versionné, empreinte du contenu analysé et synthèse des règles en échec dans chaque rapport API.
+- rapport JSON et Markdown en ligne de commande ;
+- code de sortie 1 si une règle bloquante échoue ;
+- contrat `orders.v1` versionné, empreinte du contenu analysé et synthèse des règles en échec dans chaque réponse de l’API.
 
 ```bash
 python3 src/server.py
 ```
 
-Ouvrir ensuite `http://127.0.0.1:8000`, charger l’exemple ou coller un CSV. L’API est aussi disponible via `POST /api/check` avec le contenu CSV comme corps de requête.
+Ouvrir ensuite `http://127.0.0.1:8000`, charger un exemple ou coller un CSV. L’API est aussi disponible via `POST /api/check` avec le contenu CSV comme corps de requête.
 
-Le bouton « Analyser les données World Bank » appelle `GET /api/open-data/world-bank`. Cette source est volontairement séparée du contrôle métier : elle sert à tester le parcours de récupération, de profilage et de traçabilité d’une donnée publique. L’application garde un message clair si la source externe n’est pas joignable.
-
-`GET /api/contracts/orders` expose le contrat utilisé par l’interface. `POST /api/check` retourne également la version du contrat et une empreinte de la source. Ces éléments permettent de rattacher une décision de qualité au jeu de données exact qui a été analysé.
+`GET /api/contracts/orders` expose le contrat utilisé par l’interface. `POST /api/check` retourne la version du contrat et une empreinte de la source, ce qui rattache un résultat de contrôle au fichier exact analysé.
 
 ## Ligne de commande
 
@@ -32,7 +33,7 @@ Le bouton « Analyser les données World Bank » appelle `GET /api/open-data/wor
 python3 src/run_quality.py
 ```
 
-Cette commande génère un rapport JSON et Markdown dans `out/`, et retourne un code 1 si des erreurs bloquantes sont trouvées : pratique pour une CI.
+La commande écrit `out/report.json` et `out/report.md`, et sort avec le code 1 si des erreurs bloquantes sont trouvées.
 
 ## Docker et Render
 
@@ -41,10 +42,15 @@ docker build -t trust-layer .
 docker run --rm -p 8000:8000 trust-layer
 ```
 
-`render.yaml` prépare le déploiement sur Render via un Blueprint.
+`render.yaml` décrit le déploiement sur Render (Blueprint, offre gratuite).
 
 ## Vérifier
 
 ```bash
 python3 -m unittest discover -s tests
 ```
+
+## Limites
+
+Le contrat ne couvre qu’un format de commandes à quatre colonnes ; un autre schéma demande de modifier le code.
+Le fichier est lu en entier en mémoire, sans limite de taille côté serveur, ce qui convient à une démo et pas à de gros volumes.
